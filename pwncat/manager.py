@@ -934,21 +934,21 @@ class Manager:
         take its place in the module list. This includes built-in modules.
         """
 
-        for loader, module_name, is_pkg in pkgutil.walk_packages(
+        for finder, module_name, is_pkg in pkgutil.walk_packages(
             paths, prefix="pwncat.modules."
         ):
-            # Locate the module spec
-            spec = importlib.util.find_spec(module_name)
-            if spec is None:
-                continue
-
-            # Always check `sys.modules` under `spec.name`.
-            # If it's already loaded, reuse that module; if not, load anew.
-            if spec.name in sys.modules:
-                module = sys.modules[spec.name]
+            # Already loaded — reuse it
+            if module_name in sys.modules:
+                module = sys.modules[module_name]
             else:
+                # Use the finder that walk_packages yielded — it knows
+                # the actual filesystem path, unlike importlib.util.find_spec
+                # which only searches the installed package hierarchy.
+                spec = finder.find_spec(module_name)
+                if spec is None:
+                    continue
                 module = importlib.util.module_from_spec(spec)
-                sys.modules[spec.name] = module
+                sys.modules[module_name] = module
                 spec.loader.exec_module(module)
 
             # We only care about modules that actually define `Module`
