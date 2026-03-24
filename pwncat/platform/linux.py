@@ -106,7 +106,7 @@ class PopenLinux(pwncat.subprocess.Popen):
         if self.stdin is not None:
             self.stdin.close()
         if self.stdout_raw is not None:
-            self.stdout_raw.close
+            self.stdout_raw.close()
 
         # Hope they know what they're doing...
         self.platform.command_running = None
@@ -136,7 +136,7 @@ class PopenLinux(pwncat.subprocess.Popen):
                 self.stdout_raw.raw.blocking = False
                 result = self.stdout_raw.peek(len(self.end_delim))
             finally:
-                self.stdout_raw.raw.blocking = False
+                self.stdout_raw.raw.blocking = True
 
             if result == b"" and self.stdout_raw.raw.eof:
                 self._receive_returncode()
@@ -1885,14 +1885,11 @@ class Linux(Platform):
         """Create a new directory"""
 
         try:
+            cmd = ["mkdir"]
             if parents:
-                self.run(
-                    ["mkdir", "-p", "-m", oct(mode)[2:], path], text=True, check=True
-                )
-            else:
-                self.run(
-                    ["mkdir", "-p", "-m", oct(mode)[2:], path], text=True, check=True
-                )
+                cmd.append("-p")
+            cmd.extend(["-m", oct(mode)[2:], path])
+            self.run(cmd, text=True, check=True)
         except CalledProcessError as exc:
             if "exists" in exc.stdout:
                 raise FileExistsError(exc.stdout) from exc

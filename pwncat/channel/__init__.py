@@ -453,7 +453,8 @@ class Channel(ABC):
         while True:
             self.peek_buffer = b""
             new_data = self.recv(count)
-            count -= len(new_data)
+            if count is not None:
+                count -= len(new_data)
             data += new_data
             if len(data) or timeout is None:
                 break

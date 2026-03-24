@@ -1053,11 +1053,12 @@ function prompt {
             result = self.powershell(command)
             return result[0]
         except PowershellError as exc:
-            if "not exist" in exc:
+            msg = str(exc)
+            if "not exist" in msg:
                 raise FileNotFoundError(kwargs["Path"])
-            elif "exist" in exc:
+            elif "exist" in msg:
                 raise FileExistsError(kwargs["Path"])
-            elif "directory":
+            elif "directory" in msg:
                 raise NotADirectoryError(kwargs["Path"])
             else:
                 raise PermissionError(kwargs["Path"])
