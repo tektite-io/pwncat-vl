@@ -4,13 +4,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.0] - 2026-03-24
+
+### Added
+- Python **3.14** support (tested in CI across 3.9 to 3.14)
+- 46+ unit tests running without remote targets (compat, core, config, modules, channels, database)
+- CI triggers on push/PR to main (was manual-only)
+- CI badge and Python version badge in README
+- `enable all` / `disable all` commands for check management
+- Markdown export support in report generation
 
 ### Changed
-- Replaced `netifaces` dependency with `psutil` to fix build failure on Python 3.14 (C extension incompatibility).
-- Replaced `zodburi` dependency with direct ZODB storage instantiation (`MappingStorage`/`FileStorage`) to remove dependency on `pkg_resources`.
-- Replaced all `pkg_resources.resource_filename()` calls with `importlib.resources.files()` (standard library, Python 3.9+) across `platform/linux.py`, `modules/linux/implant/pam.py`, `modules/linux/enumerate/system/uname.py`, and `modules/windows/powersploit.py`.
-- Fixed `pwncat-cs --download-plugins` command in Dockerfile (renamed to `pwncat-vl`).
+- Replaced `netifaces` with `psutil` for network interface detection (fixes Python 3.14 C extension build failure)
+- Replaced `zodburi` with direct ZODB storage instantiation (removes `pkg_resources` dependency)
+- Replaced all `pkg_resources.resource_filename()` with `importlib.resources.files()` (standard library, 3.9+)
+- Preserved `cache_size=10000` (zodburi's old default) instead of falling to ZODB's default of 400
+- Modernized syntax to Python 3.9+ via pyupgrade (`Type[X]` -> `type[X]`, `socket.error` -> `OSError`)
+- Updated CI actions (checkout v2->v4, setup-python v2->v5)
+- Fixed Dockerfile entrypoint from `pwncat-cs` to `pwncat-vl`
+- Updated README with correct Python versions, badges, dependency changes, and entrypoint name
+
+### Fixed
+- **linux.py**: `self.stdout_raw.close` missing parentheses - resource leak on every `detach()`
+- **linux.py**: `poll()` never restored `blocking` flag to `True` in finally block - broke all subsequent polls
+- **linux.py**: `mkdir` ignored `parents` flag - always passed `-p` regardless
+- **linux.py**: Shell injection via unsanitized `name` in `_do_custom_which` - now uses `shlex.quote()`
+- **linux.py**: Shell injection via unquoted `cwd` in `Popen` - now uses `shlex.quote()`
+- **windows.py**: `in exc` TypeError - `PowershellError` is not a string, fixed to `in str(exc)`
+- **windows.py**: `elif "directory":` always True - missing `in msg`, made else branch unreachable
+- **channel/__init__.py**: `peek()` crash when `count` is None - `TypeError` on `count -= len(new_data)`
+- **manager.py**: Bare `except:` catching `SystemExit`/`KeyboardInterrupt` - changed to `except Exception:`
+- **manager.py**: Duplicate `output_thread.join()` call removed
+- **manager.py**: Duplicate `COUNTRY_NAME` in x509 certificate subject removed
+- **manager.py**: `datetime.utcnow()` deprecated in 3.12 - replaced with `datetime.now(timezone.utc)`
+- **ssl_bind.py**: Same `datetime.utcnow()` deprecation fix
+- **manager.py**: `open_database()` error message suggested only absolute paths but default config uses relative
+- **download.py**: `download_errors` referenced but never defined - now properly collected and reported
+- **download.py**: Unused `task` variable from progress bar
+- **remember.py**: Undefined `pwncat` in string type hint
+- **remember.py**: Unused `json` import in `do_export()`
+- **manager.py**: `load_modules` couldn't load custom modules from external paths (PR #2 by @credibleforce)
 
 ## [0.5.9] - 2025-07-06
 
