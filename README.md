@@ -1,22 +1,27 @@
 # pwncat-vl
 
+[![Python Checks](https://github.com/Chocapikk/pwncat-vl/actions/workflows/python.yml/badge.svg)](https://github.com/Chocapikk/pwncat-vl/actions/workflows/python.yml)
+[![Python 3.9-3.14](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14-blue)](https://github.com/Chocapikk/pwncat-vl)
+
 [![asciicast](https://asciinema.org/a/417930.svg)](https://asciinema.org/a/417930)
 
-**pwncat-vl** is a community-maintained fork of [pwncat-cs](https://github.com/calebstewart/pwncat),  
-revived to support **modern Python versions (3.13+)** and ensure the tool remains usable for current red team workflows.
+**pwncat-vl** is a community-maintained fork of [pwncat-cs](https://github.com/calebstewart/pwncat), revived to support **modern Python versions (3.9 to 3.14)** and ensure the tool remains usable for current red team workflows.
 
 ---
 
-Originally created by [@calebstewart](https://github.com/calebstewart), `pwncat` is a post-exploitation platform ~~for Linux targets~~.  
+Originally created by [@calebstewart](https://github.com/calebstewart), `pwncat` is a post-exploitation platform ~~for Linux targets~~.
 It started out as a wrapper around basic bind and reverse shells and has grown from there. It streamlines common red team operations while staging code from your attacker machine, not the target.
 
-The original project has been unmaintained since 2021, and despite community interest and open pull requests, no updates were made.  
+The original project has been unmaintained since 2021, and despite community interest and open pull requests, no updates were made.
 Rather than let the project fade away, this fork was created to **fix critical issues, restore compatibility, and keep contributions alive**.
 
 ### Key changes in this fork:
-- Python **3.13 compatibility**
+- Python **3.9 to 3.14** compatibility (tested in CI)
+- Replaced deprecated dependencies (`netifaces` -> `psutil`, `zodburi` -> direct ZODB, `pkg_resources` -> `importlib.resources`)
+- Fixed critical bugs (resource leaks, broken error handling, shell injection)
 - Updated dependencies for modern environments
-- Minimal but active maintenance (contributions welcome!)
+- 46+ unit tests running across all supported Python versions
+- Active maintenance (contributions welcome!)
 
 ---
 
@@ -33,7 +38,7 @@ After receiving a connection, pwncat will configure the remote shell:
 - Locate useful binaries (using `which`)
 - Attempt to spawn a pseudo-terminal (pty) for full interactive sessions
 
-`pwncat` supports multiple methods for spawning PTYs and cross-references them with available executables on the target system.  
+`pwncat` supports multiple methods for spawning PTYs and cross-references them with available executables on the target system.
 After spawning a PTY, it sets the terminal in raw mode to mimic the behavior of an `ssh` session.
 
 It also synchronizes the remote PTY settings (rows, columns, `TERM`) with your local terminal to ensure proper behavior of interactive applications like `vim` or `nano`.
@@ -42,22 +47,22 @@ It also synchronizes the remote PTY settings (rows, columns, `TERM`) with your l
 
 ### Platform Support
 
-`pwncat` was initially Linux-only, but the original maintainers began introducing **alpha support for Windows targets**.  
+`pwncat` was initially Linux-only, but the original maintainers began introducing **alpha support for Windows targets**.
 This fork continues to support these efforts but does not introduce new Windows features (yet).
 
 ---
 
 ### Presentation
 
-John Hammond and Caleb Stewart presented `pwncat` at GRIMMCon.  
-You can find the video here: [YouTube link](https://www.youtube.com/watch?v=CISzI9klRkw).  
-This shows an early version \u2014 for current details, refer to this repository.
+John Hammond and Caleb Stewart presented `pwncat` at GRIMMCon.
+You can find the video here: [YouTube link](https://www.youtube.com/watch?v=CISzI9klRkw).
+This shows an early version - for current details, refer to this repository.
 
 ---
 
 ### Requirements
 
-- Python **3.9 to 3.13+**
+- Python **3.9 to 3.14**
 - Linux (primary support)
 - pip / virtualenv recommended
 
@@ -65,13 +70,13 @@ This shows an early version \u2014 for current details, refer to this repository
 
 ### Documentation
 
-Official documentation for the original project was hosted on Read the Docs.  
+Official documentation for the original project was hosted on Read the Docs.
 This fork does not (yet) include RTD integration, but usage remains very similar. Updated instructions are in progress.
 
 ---
 
-## Disclaimer  
-This fork is not affiliated with the original author. It exists solely to keep a useful tool alive,  
+## Disclaimer
+This fork is not affiliated with the original author. It exists solely to keep a useful tool alive,
 with full respect and credit given to the original work. Contributions are welcome, and maintenance is ongoing as time permits.
 
 
@@ -113,15 +118,14 @@ poetry install
 poetry shell
 ```
 
-## Naming Changes
+## Naming
 
-Due to naming conflicts with [Cytopia's pwncat](https://pwncat.org/), the original project was renamed `pwncat-cs`.  
-This fork continues under the name **`pwncat-vl`**, and uses the same `pwncat-cs` entrypoint for now,  
-but a future update might adjust that for clarity and independence.
+Due to naming conflicts with [Cytopia's pwncat](https://pwncat.org/), the original project was renamed `pwncat-cs`.
+This fork uses the name **`pwncat-vl`** with the entrypoint `pwncat-vl`.
 
 ## Windows Support
 
-`pwncat` now supports connections from Windows targets starting at `v0.4.0a1`. The Windows
+`pwncat` supports connections from Windows targets starting at `v0.4.0a1`. The Windows
 platform utilizes a .Net-based C2 library which is loaded automatically. Windows
 targets should connect with either a `cmd.exe` or `powershell.exe` shell, and
 pwncat will take care of the rest.
@@ -140,13 +144,12 @@ to by `plugin_path`.
 
 Aside from the main C2 DLLs, other plugins may also be available. Currently,
 the only provided default plugins are the C2 and an implementation of [BadPotato].
-pwncat can reflectively load .Net binaries to be used a plugins for the C2.
+pwncat can reflectively load .Net binaries to be used as plugins for the C2.
 For more information on Windows C2 plugins, please see the [documentation].
 
 ## Modules
 
-Recently, the architecture of the pwncat framework was redesigned to
-incorporate a generic "module" structure. All functionality is now
+The architecture of the pwncat framework uses a generic "module" structure. All functionality is
 implemented as modules. This includes enumeration, persistence and
 privilege escalation. Interacting with modules is similar to most other
 post-exploitation platforms. You can utilize the familiar `run`, `search`
@@ -203,19 +206,18 @@ help information with ``pwncat-vl --help`` or visit the [documentation].
 
 The recommended installation method is a Python virtual environment. This
 provides the easiest day-to-day usage of `pwncat`. However, there has been
-interest in using `pwncat` from a docker image, so I have provided a
-Dockerfile which provides a working `pwncat` installation. To build the image
-use:
+interest in using `pwncat` from a docker image, so a Dockerfile is provided
+which builds a working `pwncat` installation. To build the image use:
 
-``` shell
+```shell
 docker build -t pwncat .
 ```
 
 This will build the `pwncat` docker image with the tag "pwncat". The working
 directory within the container is `/work`. The entrypoint for the container
-is the `pwncat` binary. It can be used like so:
+is the `pwncat-vl` binary. It can be used like so:
 
-``` shell
+```shell
 # Connect to a bind shell at 10.0.0.1:4444
 docker run -v "/some/directory":/work -t pwncat 10.0.0.1 4444
 ```
@@ -226,7 +228,7 @@ exposed through any mounted directories.
 
 ## Features and Functionality
 
-`pwncat` provides two main features. At it's core, it's goal is to automatically
+`pwncat` provides two main features. At its core, its goal is to automatically
 setup a remote PseudoTerminal (pty) which allows interaction with the remote
 host much like a full SSH session. When operating in a pty, you can use common
 features of your remote shell such as history, line editing, and graphical
@@ -253,16 +255,6 @@ in the [documentation]. If you have an idea for a new privilege escalation metho
 or persistence method, please take a look at the API documentation specifically.
 Pull requests are welcome!
 
-## Planned Features
-
-**pwncat** would like to be come a red team swiss army knife. Hopefully soon,
-more features will be added.
-
-* Persistence methods (bind shell, cronjobs, SSH access, PAM abuse, etc.)
-* Aggression methods (spam randomness to terminals, flush firewall, etc.)
-* Meme methods (terminal-parrot, cowsay, wall, etc.)
-* Network methods (port forward, internet access through host, etc.)
-
 ## Known Issues
 
 Because `pwncat` is trying to abstractly interact with any shell with minimal remote system
@@ -274,17 +266,13 @@ peculiar output or command failures.
 
 ### BSD Support
 
-While BSD is a Unix-based kernel, in practice it's userland tools are noticeably
+While BSD is a Unix-based kernel, in practice its userland tools are noticeably
 different from their Linux counterparts. Due to this, many of the automated
 features of `pwncat` will not work or outright fail when running against a BSD
-based target. I have tried to catch all errors or edge cases, however there are
-likely some hiccups which haven't been fully tested against BSD. In any case,
-the stabilized shell should function within a BSD environment, but I don't
-provide any guarantees.
+based target. The stabilized shell should function within a BSD environment, but
+no guarantees are provided.
 
-If I find some time later down the road, I may try to stabilize `pwncat` on BSD,
-but for now my focus is on Linux-based distributions. If you'd like to
-contribute to making `pwncat` behave better on BSD, you are more then welcome to
+If you'd like to contribute to making `pwncat` behave better on BSD, you are more than welcome to
 reach out or just fork the repo. As always, pull requests are welcome!
 
 [documentation]: https://pwncat.readthedocs.io/en/latest
