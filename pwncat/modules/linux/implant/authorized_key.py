@@ -127,10 +127,13 @@ class Module(ImplantModule):
         # Ensure the directory exists
         yield Status("locating authorized keys")
         homedir = session.platform.Path(user_info.home)
-        if not (homedir / ".ssh").is_dir():
-            (homedir / ".ssh").mkdir(parents=True, exist_ok=True)
+        ssh_dir = homedir / ".ssh"
+        if not ssh_dir.is_dir():
+            ssh_dir.mkdir(parents=True, exist_ok=True)
+        session.platform.chown(str(ssh_dir), user_info.id, user_info.gid)
+        ssh_dir.chmod(0o700)
 
-        authkeys_path = homedir / ".ssh" / "authorized_keys"
+        authkeys_path = ssh_dir / "authorized_keys"
 
         if authkeys_path.is_file():
             try:

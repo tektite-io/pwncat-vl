@@ -1,42 +1,27 @@
-FROM python:3.9-alpine as builder
+FROM python:3.9-slim AS builder
 
-# Install python3 and development files
-RUN set -eux \
-	&& apk add --no-cache \
-		alpine-sdk \
-		libffi-dev \
-		linux-headers \
-		openssl-dev \
-		musl-dev \
-		cargo \
-		libstdc++
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    cargo \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy pwncat source
 COPY . /opt/pwncat
 
-# Setup virtual environment
-RUN set -eux \
-	&& python -m pip install -U pip setuptools wheel setuptools_rust
+RUN python -m pip install -U pip setuptools wheel setuptools_rust
+RUN cd /opt/pwncat && pip install . \
+    && pwncat-vl --download-plugins
 
-# Setup pwncat
-RUN set -eux \
-	&& cd /opt/pwncat \
-	&& pip install . \
-	&& pwncat-vl --download-plugins
+FROM python:3.9-slim AS final
 
-FROM python:3.9-alpine as final
+RUN apt-get update && apt-get install -y \
+    libstdc++6 \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir /work
 
-# Add libstdc++ and create the working directory
-RUN set -eux \
-	&& apk add --no-cache libstdc++ \
-	&& mkdir /work
+COPY --from=builder /usr/local /usr/local
 
-# Copy installed packages from builder image
-COPY --from=builder /usr/local/lib/python3.9 /usr/local/lib/python3.9
-COPY --from=builder /usr/local/bin/pwncat-vl /usr/local/bin/pwncat-vl
-
-# Set working directory
 WORKDIR /work
 
-# Entrypoint is pwncat itself
 ENTRYPOINT ["pwncat-vl"]
