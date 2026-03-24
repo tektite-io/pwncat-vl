@@ -23,7 +23,7 @@ class Command(CommandDefinition):
         "value": Parameter(Complete.NONE, nargs="?", help="Value to store"),
     }
 
-    def run(self, manager: "pwncat.manager.Manager", args):
+    def run(self, manager, args):
         if not hasattr(manager, "remember"):
             manager.remember = {}
 
@@ -64,8 +64,6 @@ class Command(CommandDefinition):
             console.log("All remembered values cleared.")
 
         def do_export():
-            import json
-
             console.print_json(data=memory)
 
         dispatch = {

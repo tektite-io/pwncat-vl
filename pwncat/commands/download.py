@@ -75,10 +75,9 @@ def get_all_entries(start_dir):
     """
     directories = []
     files = []
+    download_errors = []
     stack = [start_dir]
     visited = set()
-
-    # download_errors is assumed to be in the outer scope.
     while stack:
         current = stack.pop()
         rstr = str(current)
@@ -104,7 +103,7 @@ def get_all_entries(start_dir):
                     files.append(entry)
             except Exception as e:
                 download_errors.append(f"{entry}: {e}")
-    return directories, files
+    return directories, files, download_errors
 
 
 class Command(CommandDefinition):
@@ -160,10 +159,12 @@ class Command(CommandDefinition):
                     TextColumn("[bold cyan]{task.description}"),
                     transient=True,
                 ) as listing_progress:
-                    task = listing_progress.add_task(
+                    listing_progress.add_task(
                         "Listing directories...", total=None
                     )
-                    directories, file_list = get_all_entries(remote)
+                    directories, file_list, errors = get_all_entries(remote)
+                    for err in errors:
+                        console.log(f"[red]Skipped: {err}[/red]")
                     listing_progress.stop()
                 total_files = len(file_list)
                 console.log(
