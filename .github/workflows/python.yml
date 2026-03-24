@@ -1,5 +1,9 @@
 name: Python Checks
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -8,15 +12,16 @@ jobs:
 
     strategy:
       matrix:
-        python-versions: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-versions: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-versions }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-versions }}
+          allow-prereleases: true
 
       - name: Install pwncat-vl with pipx
         run: |
