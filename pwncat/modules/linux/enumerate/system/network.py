@@ -31,18 +31,18 @@ class Module(EnumerateModule):
 
     def enumerate(self, session):
 
-        try:
-            output = session.platform.run(
-                ["ip", "-c=never", "addr"], capture_output=True, text=True, check=True
-            )
-        except CalledProcessError:
+        output = None
+        for cmd in [["ip", "-c=never", "addr"], ["ip", "addr"]]:
             try:
                 output = session.platform.run(
-                    ["ip", "addr"], capture_output=True, text=True, check=True
+                    cmd, capture_output=True, text=True
                 )
-            except CalledProcessError:
-                return
-        except FileNotFoundError:
+                if output.stdout and output.stdout.strip():
+                    break
+            except (CalledProcessError, FileNotFoundError, PermissionError):
+                continue
+
+        if output is None or not output.stdout:
             return
 
         if output.stdout:

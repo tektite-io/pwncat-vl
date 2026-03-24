@@ -3,6 +3,7 @@ import shlex
 from typing import List
 
 from pwncat.db import Fact
+from pwncat.subprocess import CalledProcessError
 from pwncat.platform.linux import Linux
 from pwncat.modules.enumerate import Schedule, EnumerateModule
 
@@ -54,37 +55,53 @@ class Module(EnumerateModule):
 
     def enumerate(self, session):
 
-        try:
-            proc = session.platform.run(
-                "ps -eo pid,ppid,uid,user,command --no-header -ww",
-                capture_output=True,
-                text=True,
-                check=True,
-            )
+        # Try GNU ps first, fall back to POSIX ps for busybox environments
+        commands = [
+            "ps -eo pid,ppid,uid,user,command --no-header -ww",
+            "ps -eo pid,ppid,uid,user,args",
+        ]
 
-            if proc.stdout:
-                # Iterate over each process
-                for line in proc.stdout.split("\n"):
-                    if line:
-                        line = line.strip()
+        proc = None
+        for cmd in commands:
+            try:
+                proc = session.platform.run(
+                    cmd, capture_output=True, text=True, check=True,
+                )
+                if proc.stdout:
+                    break
+            except (CalledProcessError, FileNotFoundError, PermissionError):
+                continue
 
-                        entities = line.split()
-
-                        try:
-                            pid, ppid, uid, username, *argv = entities
-                        except ValueError:
-                            # We couldn't parse some line for some reason?
-                            continue
-
-                        command = " ".join(argv)
-                        # Kernel threads aren't helpful for us
-                        if command.startswith("[") and command.endswith("]"):
-                            continue
-
-                        uid = int(uid)
-                        pid = int(pid)
-                        ppid = int(ppid)
-
-                        yield ProcessData(self.name, uid, username, pid, ppid, argv)
-        except (FileNotFoundError, PermissionError):
+        if proc is None or not proc.stdout:
             return
+
+        for line in proc.stdout.split("\n"):
+            if not line or not line.strip():
+                continue
+
+            line = line.strip()
+
+            # Skip header lines that slipped through (POSIX ps fallback)
+            if line.startswith("PID") or line.startswith("  PID"):
+                continue
+
+            entities = line.split()
+
+            try:
+                pid, ppid, uid, username, *argv = entities
+            except ValueError:
+                continue
+
+            command = " ".join(argv)
+            # Kernel threads aren't helpful for us
+            if command.startswith("[") and command.endswith("]"):
+                continue
+
+            try:
+                uid = int(uid)
+                pid = int(pid)
+                ppid = int(ppid)
+            except ValueError:
+                continue
+
+            yield ProcessData(self.name, uid, username, pid, ppid, argv)
