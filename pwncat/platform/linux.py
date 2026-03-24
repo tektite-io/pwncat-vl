@@ -821,7 +821,7 @@ class Linux(Platform):
 
         try:
             result = self.run(
-                f"""IFS=':'; for path in $PATH; do if [ -f "$path/{name}" ]; then echo "$path/{name}"; break; fi; done; IFS=' '""",
+                f"""IFS=':'; for path in $PATH; do if [ -f "$path/"{shlex.quote(name)} ]; then echo "$path/"{shlex.quote(name)}; break; fi; done; IFS=' '""",
                 shell=True,
                 capture_output=True,
                 check=True,
@@ -1130,7 +1130,7 @@ class Linux(Platform):
         #     command = shlex.join(["/bin/sh", "-c", command])
 
         if cwd is not None:
-            command = f"(cd {cwd} && {command})"
+            command = f"(cd {shlex.quote(cwd)} && {command})"
 
         if env is not None:
             command = (

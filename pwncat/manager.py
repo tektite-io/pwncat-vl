@@ -421,7 +421,6 @@ class Listener(threading.Thread):
                 subject = issuer = x509.Name(
                     [
                         x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
                         x509.NameAttribute(
                             NameOID.STATE_OR_PROVINCE_NAME, "California"
                         ),
@@ -436,9 +435,9 @@ class Listener(threading.Thread):
                     .issuer_name(issuer)
                     .public_key(key.public_key())
                     .serial_number(x509.random_serial_number())
-                    .not_valid_before(datetime.datetime.utcnow())
+                    .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
                     .not_valid_after(
-                        datetime.datetime.utcnow() + datetime.timedelta(days=365)
+                        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365)
                     )
                     .add_extension(
                         x509.SubjectAlternativeName([x509.DNSName("localhost")]),
@@ -1129,8 +1128,7 @@ class Manager:
                     interactive_complete.set()
                     if output_thread is not None:
                         output_thread.join()
-                        output_thread.join()
-            except:  # noqa: E722
+            except Exception:
                 # We don't want to die because of an uncaught exception, but
                 # at least let the user know something happened. This should
                 # probably be configurable somewhere.
