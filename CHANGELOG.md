@@ -15,9 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Markdown export support in report generation
 
 ### Changed
-- Replaced `netifaces` with `psutil` for network interface detection (fixes Python 3.14 C extension build failure)
-- Replaced `zodburi` with direct ZODB storage instantiation (removes `pkg_resources` dependency)
-- Replaced all `pkg_resources.resource_filename()` with `importlib.resources.files()` (standard library, 3.9+)
+- Replaced `netifaces` with `psutil` for network interface detection (fixes Python 3.14 C extension build failure) (PR #3 by @raltheo)
+- Replaced `zodburi` with direct ZODB storage instantiation (removes `pkg_resources` dependency) (PR #3 by @raltheo)
+- Replaced all `pkg_resources.resource_filename()` with `importlib.resources.files()` (standard library, 3.9+) (PR #3 by @raltheo)
 - Preserved `cache_size=10000` (zodburi's old default) instead of falling to ZODB's default of 400
 - Modernized syntax to Python 3.9+ via pyupgrade (`Type[X]` -> `type[X]`, `socket.error` -> `OSError`)
 - Updated CI actions (checkout v2->v4, setup-python v2->v5)
