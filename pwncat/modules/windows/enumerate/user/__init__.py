@@ -25,6 +25,13 @@ class Module(EnumerateModule):
 
         users = users[0]
 
+        if isinstance(users, dict):
+            users = [users]
+        if not isinstance(users, list):
+            raise ModuleFailed(
+                f"unexpected type from Get-LocalUser: {type(users).__name__}"
+            )
+
         for user in users:
             yield WindowsUser(
                 source=self.name,

@@ -177,11 +177,24 @@ def main():
             query_args["host"] = None
             query_args["port"] = None
             query_args["platform"] = args.platform
-            query_args["identity"] = args.identity
             query_args["certfile"] = args.ssl_cert
             query_args["keyfile"] = args.ssl_key
             query_args["ssl"] = args.ssl
             querystring = None
+
+            if args.identity is not None:
+                try:
+                    import paramiko
+
+                    if not hasattr(paramiko, "load_private_key"):
+                        console.log(
+                            "[red]error[/red]: incompatible paramiko detected; "
+                            "install [blue]paramiko-ng[/blue] instead of [blue]paramiko[/blue]"
+                        )
+                        return
+                except ImportError:
+                    pass
+            query_args["identity"] = args.identity
 
             if args.connection_string:
                 m = connect.Command.CONNECTION_PATTERN.match(args.connection_string)
