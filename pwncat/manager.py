@@ -42,9 +42,10 @@ from enum import Enum, auto
 from typing import Dict, List, Tuple, Union, Callable, Optional, Generator
 
 import ZODB
-import zodburi
 import rich.progress
 import persistent.list
+import ZODB.FileStorage
+import ZODB.MappingStorage
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from prompt_toolkit.shortcuts import confirm
@@ -898,8 +899,18 @@ class Manager:
             raise RuntimeError("cannot change database after sessions are established")
 
         # Connect/open the database
-        factory_class, factory_args = zodburi.resolve_uri(self.config["db"])
-        storage = factory_class()
+        uri = self.config["db"]
+        if uri == "memory://" or uri == "memory:":
+            storage = ZODB.MappingStorage.MappingStorage()
+            factory_args = {}
+        elif uri.startswith("file://"):
+            path = uri[len("file://") :]
+            storage = ZODB.FileStorage.FileStorage(path)
+            factory_args = {}
+        else:
+            raise ValueError(
+                f"Unsupported database URI: {uri!r}. Use 'memory://' or 'file:///path/to/db.fs'"
+            )
         self.db = ZODB.DB(storage, **factory_args)
 
         conn = self.db.open()
