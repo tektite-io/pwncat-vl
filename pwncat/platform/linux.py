@@ -367,6 +367,7 @@ class LinuxWriter(BufferedIOBase):
         0x06,
         0x07,
         0x0C,
+        0x0D,
         0x0E,
         0x0F,
         0x10,
@@ -581,6 +582,11 @@ class Linux(Platform):
             str(_pkg_files("pwncat").joinpath("data/gtfobins.json")), self.which
         )
 
+        # Drain any shell startup output (e.g. "bash: no job control",
+        # MOTD, or other banners) before sending commands
+        time.sleep(0.2)
+        self.channel.drain()
+
         # Ensure history is disabled
         self.disable_history()
 
@@ -632,7 +638,11 @@ class Linux(Platform):
                     self.session.log(f"upgrading from {self.shell} to {shell}")
                     self.shell = shell
                     self.channel.sendline(f"exec {self.shell}".encode("utf-8"))
-                    time.sleep(0.5)
+                    # Wait for the new shell to be ready by sending a sync
+                    # marker and waiting for it, instead of a fixed sleep.
+                    # This drains any startup output (e.g. "no job control").
+                    time.sleep(0.1)
+                    self.channel.drain()
                     break
 
         self.refresh_uid()

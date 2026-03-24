@@ -19,7 +19,7 @@ We can implement that later after all the enumeration modules are set.
 per_user = True
 sudo_pattern = re.compile(
     r"""(%?[a-zA-Z][a-zA-Z0-9_]*)\s+([a-zA-Z_][-a-zA-Z0-9_.]*)\s*="""
-    r"""(\([a-zA-Z_][-a-zA-Z0-9_]*(:[a-zA-Z_][a-zA-Z0-9_]*)?(,\ *!?[a-zA-Z_][-a-zA-Z0-9_]*(:[a-zA-Z_][a-zA-Z0-9_]*)?)*\)|[a-zA-Z_]"""
+    r"""(\(\s*[a-zA-Z_][-a-zA-Z0-9_]*(\s*:\s*[a-zA-Z_][a-zA-Z0-9_]*)?(,\ *!?[a-zA-Z_][-a-zA-Z0-9_]*(\s*:\s*[a-zA-Z_][a-zA-Z0-9_]*)?)*\s*\)|[a-zA-Z_]"""
     r"""[a-zA-Z0-9_]*)?\s+((NOPASSWD:\s+)|(SETENV:\s+)|(sha[0-9]{1,3}:"""
     r"""[-a-zA-Z0-9_]+\s+))*(.*)"""
 )
@@ -127,10 +127,10 @@ def LineParser(source, line):
     host = match.group(2)
 
     if match.group(3) is not None:
-        runas_user = match.group(3).lstrip("(").rstrip(")")
+        runas_user = match.group(3).strip().lstrip("(").rstrip(")").strip()
         if match.group(4) is not None:
-            runas_group = match.group(4).lstrip(" ")
-            runas_user = runas_user.split(":")[0].rstrip(" ")
+            runas_group = match.group(4).strip().lstrip(":").strip()
+            runas_user = runas_user.split(":")[0].strip()
         else:
             runas_group = None
         if runas_user == "":
