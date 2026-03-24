@@ -849,8 +849,15 @@ class Manager:
         except (FileNotFoundError, PermissionError):
             pass
 
-        # Load user configuration script
-        user_rc = os.path.join(data_home, "pwncatrc")
+        # Load user configuration script (check XDG_CONFIG_HOME first, then XDG_DATA_HOME)
+        config_home = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+        if not config_home:
+            config_home = "~/.config"
+        config_home = os.path.expanduser(os.path.join(config_home, "pwncat"))
+
+        user_rc = os.path.join(config_home, "pwncatrc")
+        if not os.path.isfile(user_rc):
+            user_rc = os.path.join(data_home, "pwncatrc")
         try:
             with open(user_rc) as filp:
                 self.parser.eval(filp.read(), user_rc)
