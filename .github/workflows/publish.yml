@@ -14,10 +14,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -29,10 +29,10 @@ jobs:
           poetry install
           poetry build
 
-      - name: Publish Package to PyPI via OIDC
-        uses: pypa/gh-action-pypi-publish@v1.9.0
+      - name: Publish Package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          publish_method: pypi-oidc
+          verify-metadata: false
 
       - name: Download and Archive Plugins
         run: |
@@ -47,7 +47,7 @@ jobs:
           echo "[Full Changelog](https://github.com/Chocapikk/pwncat-vl/blob/v$version/CHANGELOG.md)" >> this_version_changelog.md
 
       - name: Publish Plugins
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: "pwncat-plugins.tar.gz"
           body_path: this_version_changelog.md
