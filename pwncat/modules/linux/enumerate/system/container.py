@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from pwncat.db import Fact
-from pwncat.subprocess import CalledProcessError
 from pwncat.platform.linux import Linux
 from pwncat.modules.enumerate import EnumerateModule
 
@@ -37,19 +36,10 @@ class Module(EnumerateModule):
             pass
 
         try:
-            proc = session.platform.run(
-                'find / -maxdepth 3 -name "*dockerenv*" -exec ls -la {{}} \\; 2>/dev/null',
-                capture_output=True,
-                text=True,
-            )
-
-            if proc.stdout:
-                if proc.stdout.strip() != "":
-                    yield ContainerData(self.name, "docker")
-                    return
-
-        except CalledProcessError:
-            # We couldn't read in from a .dockerenv file
+            if session.platform.Path("/.dockerenv").exists():
+                yield ContainerData(self.name, "docker")
+                return
+        except (PermissionError, OSError):
             pass
 
         try:

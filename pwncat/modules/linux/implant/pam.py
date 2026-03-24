@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import io
 import hashlib
-from subprocess import CalledProcessError
+from pwncat.subprocess import CalledProcessError
 from importlib.resources import files as _pkg_files
 
 import pwncat

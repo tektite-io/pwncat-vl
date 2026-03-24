@@ -68,7 +68,7 @@ class CVE_2017_5618(ExecuteAbility):
             )
         except PlatformError as exc:
             session.platform.Path(rootshell).unlink()
-            raise ModuleFailed("compilation failed: {exc}") from exc
+            raise ModuleFailed(f"compilation failed: {exc}") from exc
 
         # Switch to /etc but save our previous directory so we can return to it
         old_cwd = session.platform.chdir("/etc")
