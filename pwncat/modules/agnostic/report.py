@@ -41,7 +41,7 @@ class Module(BaseModule):
         ),
     }
 
-    def generate_markdown_table(self, data: List[List], headers: bool = False):
+    def generate_markdown_table(self, data: list[list], headers: bool = False):
         """Generate a markdown table from the given data and headers"""
 
         # Get column widths

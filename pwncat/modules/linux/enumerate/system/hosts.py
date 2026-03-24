@@ -14,10 +14,10 @@ class HostData(Fact):
         super().__init__(source=source, types=["network.host"])
 
         self.address: str = address
-        self.hostnames: List[str] = hostnames
+        self.hostnames: list[str] = hostnames
 
     def title(self, session):
-        joined_hostnames = ", ".join((rich.markup.escape(h) for h in self.hostnames))
+        joined_hostnames = ", ".join(rich.markup.escape(h) for h in self.hostnames)
         return f"[cyan]{rich.markup.escape(self.address)}[/cyan] -> [blue]{joined_hostnames}[/blue]"
 
 
@@ -49,7 +49,7 @@ class Module(EnumerateModule):
                         or line == ""
                     ):
                         continue
-                    address, *hostnames = [e for e in line.split(" ") if e != ""]
+                    address, *hostnames = (e for e in line.split(" ") if e != "")
                     yield HostData(self.name, address, hostnames)
         except (PermissionError, FileNotFoundError):
             pass

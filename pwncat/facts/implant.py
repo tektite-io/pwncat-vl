@@ -48,7 +48,7 @@ class Implant(Fact):
     :type uid: Union[int, str]
     """
 
-    def __init__(self, source: str, types: List[str], uid: Union[int, str]):
+    def __init__(self, source: str, types: list[str], uid: Union[int, str]):
         super().__init__(source=source, types=types)
 
         self.uid = uid

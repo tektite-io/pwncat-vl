@@ -112,9 +112,9 @@ class EnumerateModule(BaseModule):
     # List of categories/enumeration types this module provides
     # This should be set by the sub-classes to know where to find
     # different types of enumeration data
-    PROVIDES: typing.List[str] = []
+    PROVIDES: list[str] = []
     """ List of fact types which this module is capable of providing """
-    PLATFORM: typing.List[typing.Type[Platform]] = []
+    PLATFORM: list[type[Platform]] = []
     """ List of supported platforms for this module """
     SCOPE: Scope = Scope.HOST
     """ Defines the scope for this fact (either host or session) """
@@ -212,7 +212,7 @@ class EnumerateModule(BaseModule):
     def run(
         self,
         session: "pwncat.manager.Session",
-        types: typing.List[str],
+        types: list[str],
         clear: bool,
         cache: bool,
     ):

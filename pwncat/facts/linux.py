@@ -83,7 +83,7 @@ class LinuxGroup(Group):
         group_name: str,
         hash: Optional[str],
         gid: int,
-        members: List[int],
+        members: list[int],
         password: Optional[str] = None,
     ):
 

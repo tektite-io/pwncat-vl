@@ -39,7 +39,8 @@ import contextlib
 import importlib.util
 from io import TextIOWrapper
 from enum import Enum, auto
-from typing import Dict, List, Tuple, Union, Callable, Optional, Generator
+from typing import Dict, List, Tuple, Union, Callable, Optional
+from collections.abc import Generator
 
 import ZODB
 import rich.progress
@@ -114,7 +115,7 @@ class Listener(threading.Thread):
     def __init__(
         self,
         manager: "Manager",
-        address: Tuple[str, int],
+        address: tuple[str, int],
         protocol: str = "socket",
         platform: Optional[str] = None,
         count: Optional[int] = None,
@@ -127,7 +128,7 @@ class Listener(threading.Thread):
 
         self.manager: "Manager" = manager
         """ The controlling manager object """
-        self.address: Tuple[str, int] = address
+        self.address: tuple[str, int] = address
         """ The address to bind our listener to on the attacking machine """
         self.protocol: str = protocol
         """ Name of the channel protocol to use for incoming connections """
@@ -386,7 +387,7 @@ class Listener(threading.Thread):
             )
 
             return server
-        except socket.error as exc:
+        except OSError as exc:
             raise ListenerError(str(exc))
 
     def _ssl_wrap(self, server: socket.socket) -> ssl.SSLSocket:
@@ -612,7 +613,7 @@ class Session:
             ):
                 return group
 
-    def iter_groups(self, members: Optional[List[Union[str, int]]] = None):
+    def iter_groups(self, members: Optional[list[Union[str, int]]] = None):
         """Iterate over groups for the target"""
 
         for group in self.run("enumerate.gather", progress=False, types=["group"]):
@@ -810,13 +811,13 @@ class Manager:
     def __init__(self, config: str = None):
         self.config = Config()
         self.session_id = 0  # start with 0-indexed session IDs
-        self.sessions: Dict[int, Session] = {}
-        self.modules: Dict[str, pwncat.modules.BaseModule] = {}
+        self.sessions: dict[int, Session] = {}
+        self.modules: dict[str, pwncat.modules.BaseModule] = {}
         self._target = None
         self.parser = CommandParser(self)
         self.interactive_running = False
         self.db: ZODB.DB = None
-        self.listeners: List[Listener] = []
+        self.listeners: list[Listener] = []
 
         # This is needed because pwntools captures the terminal...
         # there's no way officially to undo it, so this is a nasty

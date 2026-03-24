@@ -97,7 +97,7 @@ class Config:
     def __init__(self):
 
         # Basic key-value store w/ typing
-        self.values: Dict[str, Dict[str, Any]] = {
+        self.values: dict[str, dict[str, Any]] = {
             "lhost": {
                 "value": ipaddress.ip_address("127.0.0.1"),
                 "type": ipaddress.ip_address,
@@ -118,12 +118,12 @@ class Config:
         }
 
         # Locals are set per-used-module
-        self.locals: Dict[str, Any] = {}
+        self.locals: dict[str, Any] = {}
         self.module: BaseModule = None
 
         # Map ascii escape sequences or printable bytes to lists of commands to
         # run.
-        self.bindings: Dict[KeyType, str] = {
+        self.bindings: dict[KeyType, str] = {
             KeyType("c-d"): "pass",
             KeyType("s"): "sync",
             KeyType("c"): "set state command",

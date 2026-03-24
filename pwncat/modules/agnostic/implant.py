@@ -70,7 +70,7 @@ class Module(BaseModule):
                 try:
                     implant_ids = [int(idx.strip()) for idx in selections]
                     # Filter the implants
-                    implants: List[Implant] = [implants[i - 1] for i in implant_ids]
+                    implants: list[Implant] = [implants[i - 1] for i in implant_ids]
                     break
                 except (IndexError, ValueError):
                     console.print("[red]error[/red]: invalid selection!")

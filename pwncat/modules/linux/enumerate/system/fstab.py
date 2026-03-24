@@ -18,7 +18,7 @@ class FstabEntry(Fact):
         """ The target location for this mount (e.g. /mnt/mydisk or /home) """
         self.fstype: str = fstype
         """ The type of filesystem being mounted (e.g. ext4 or bind) """
-        self.options: List[str] = options
+        self.options: list[str] = options
         """ The list of options associated with this mount (split on comma) """
         self.freq: int = freq
         """ Whether to dump this filesystem (defaults to zero, fifth field, see fstab(5)) """

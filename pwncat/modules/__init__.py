@@ -297,7 +297,7 @@ class BaseModule(metaclass=BaseModuleMeta):
     property to ``None``.
     """
 
-    ARGUMENTS: Dict[str, Argument] = {
+    ARGUMENTS: dict[str, Argument] = {
         # "name": Argument(int, default="value"),
         # "name2": Argument(List(int), default=[1, 2, 3]),
     }
@@ -315,7 +315,7 @@ class BaseModule(metaclass=BaseModuleMeta):
     """ If you want to use `yield Status(...)` to update the progress bar
     but only return one scalar value, setting this to true will collapse
     an array with only a single object to it's scalar value. """
-    PLATFORM: typing.List[typing.Type["pwncat.platform.Platform"]] = []
+    PLATFORM: list[type["pwncat.platform.Platform"]] = []
     """ The platform this module is compatible with (can be multiple) """
 
     def __init__(self):

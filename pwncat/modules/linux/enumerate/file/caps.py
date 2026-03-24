@@ -21,7 +21,7 @@ class FileCapabilityData(Fact):
 
         self.path: str = path
         """ The path to the file """
-        self.caps: List[str] = caps
+        self.caps: list[str] = caps
         """ List of strings representing the capabilities (e.g. "cap_net_raw+ep") """
 
     def title(self, session):
@@ -56,11 +56,11 @@ class Module(EnumerateModule):
                 # We can try and handle both cases.
                 if " = " in line:
                     # /usr/bin/mtr-packet = cap_net_raw+ep
-                    path, caps = [x.strip() for x in line.strip().split("=")]
+                    path, caps = (x.strip() for x in line.strip().split("="))
                     caps = caps.split(",")
                     fact = FileCapabilityData(self.name, path, caps)
                 else:
-                    path, caps = [x.strip() for x in line.strip().split(" ")]
+                    path, caps = (x.strip() for x in line.strip().split(" "))
                     caps = caps.split(",")
                     fact = FileCapabilityData(self.name, path, caps)
 

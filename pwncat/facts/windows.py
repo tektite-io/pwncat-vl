@@ -197,7 +197,7 @@ class WindowsGroup(Group):
         gid: str,
         description: str,
         principal_source: str,
-        members: List[str],
+        members: list[str],
         domain: Optional[str] = None,
     ):
         super().__init__(source=source, name=name, gid=gid, members=members)

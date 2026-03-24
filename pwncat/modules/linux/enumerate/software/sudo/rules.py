@@ -38,9 +38,9 @@ class SudoSpec(Fact):
         host: Optional[str] = None,
         runas_user: Optional[str] = None,
         runas_group: Optional[str] = None,
-        options: List[str] = None,
+        options: list[str] = None,
         hash: str = None,
-        commands: List[str] = None,
+        commands: list[str] = None,
     ):
         super().__init__(source=source, types=["software.sudo.rule"])
 
@@ -59,11 +59,11 @@ class SudoSpec(Fact):
         """ The user we are allowed to run as """
         self.runas_group: Optional[str] = runas_group
         """ The GID we are allowed to run as (may be None)"""
-        self.options: List[str] = options
+        self.options: list[str] = options
         """ A list of options specified (e.g. NOPASSWD, SETENV, etc) """
         self.hash: str = hash
         """ A hash type and value which sudo will obey """
-        self.commands: List[str] = commands
+        self.commands: list[str] = commands
         """ The command specification """
 
     def title(self, session):
@@ -77,7 +77,7 @@ class SudoSpec(Fact):
         else:
             display += f"Group [cyan]{rich.markup.escape(self.group)}[/cyan]: "
 
-        display += f"[yellow]{'[/yellow], [yellow]'.join((rich.markup.escape(c) for c in self.commands))}[/yellow] as "
+        display += f"[yellow]{'[/yellow], [yellow]'.join(rich.markup.escape(c) for c in self.commands)}[/yellow] as "
 
         if self.runas_user == "root":
             display += "[red]root[/red]"

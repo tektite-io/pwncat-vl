@@ -536,7 +536,7 @@ class Channel(ABC):
         return f"[cyan]{self.address[0]}[/cyan]:[blue]{self.address[1]}[/blue]"
 
 
-def register(name: str, channel_class: Type[Channel]):
+def register(name: str, channel_class: type[Channel]):
     """
     Register a new channel class with ``pwncat``.
 
@@ -549,7 +549,7 @@ def register(name: str, channel_class: Type[Channel]):
     CHANNEL_TYPES[name] = channel_class
 
 
-def find(name: str) -> Type[Channel]:
+def find(name: str) -> type[Channel]:
     """
     Retrieve the channel class for the specified name.
 

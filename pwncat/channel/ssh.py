@@ -70,7 +70,7 @@ class Ssh(Channel):
 
         except paramiko.ssh_exception.AuthenticationException as exc:
             raise ChannelError(self, f"ssh authentication failed: {str(exc)}") from exc
-        except (paramiko.ssh_exception.SSHException, socket.error) as exc:
+        except (paramiko.ssh_exception.SSHException, OSError) as exc:
             raise ChannelError(self, f"ssh connection failed: {str(exc)}") from exc
 
     @property

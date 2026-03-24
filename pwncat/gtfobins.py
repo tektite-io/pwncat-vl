@@ -10,7 +10,8 @@ binaries can be seen in ``pwncat/data/gtfobins.json``.
 import os
 import shlex
 from enum import Flag, auto
-from typing import IO, Any, Dict, List, Tuple, BinaryIO, Callable, Generator
+from typing import IO, Any, Dict, List, Tuple, BinaryIO, Callable
+from collections.abc import Generator
 
 import rapidjson as json
 
@@ -78,7 +79,7 @@ class Stream(Flag):
 class Method:
     """Abstract method class built from the JSON database"""
 
-    def __init__(self, binary: "Binary", cap: Capability, data: Dict[str, Any]):
+    def __init__(self, binary: "Binary", cap: Capability, data: dict[str, Any]):
         """Create a new method associated with the given binary."""
 
         try:
@@ -246,7 +247,7 @@ class MethodWrapper:
                 f"{self.stream.name}: non raw or print streams are no longer supported"
             )
 
-    def build(self, gtfo: "GTFOBins", **kwargs) -> Tuple[str, str, str]:
+    def build(self, gtfo: "GTFOBins", **kwargs) -> tuple[str, str, str]:
         """Build the payload for this method and binary path. Depending on
         capability and stream type, different named parameters are required.
 
@@ -307,12 +308,12 @@ class MethodWrapper:
 class Binary:
     """Encapsulates a GTFOBin and it's methods for all capabilities"""
 
-    def __init__(self, gtfo: "GTFOBins", name: str, methods: List[Dict[str, Any]]):
+    def __init__(self, gtfo: "GTFOBins", name: str, methods: list[dict[str, Any]]):
         """Create a GTFOBin from the given list of capabilities"""
 
         # Initialize to no capabilities
         self.caps = Capability.NONE
-        self.methods: List[Method] = []
+        self.methods: list[Method] = []
 
         for method_data in methods:
             try:
@@ -375,9 +376,9 @@ class GTFOBins:
         remembered to lookup existing binaries on the target system for later."""
 
         self.which = which
-        self.binaries: Dict[str, Binary] = {}
+        self.binaries: dict[str, Binary] = {}
 
-        with open(gtfobins, "r") as filp:
+        with open(gtfobins) as filp:
             binary_data = json.load(filp)
 
         if not isinstance(binary_data, dict):
@@ -385,7 +386,7 @@ class GTFOBins:
 
         self.parse_binary_data(binary_data)
 
-    def parse_binary_data(self, binary_data: Dict[str, List[Dict[str, Any]]]):
+    def parse_binary_data(self, binary_data: dict[str, list[dict[str, Any]]]):
         """Parse the given GTFObins binary information into the associated
         in-memory binary objects"""
 
@@ -412,10 +413,9 @@ class GTFOBins:
             # will be the path or binary name
             binary_path = shlex.split(spec.rstrip("*"))[0]
 
-            for method in self.iter_binary(
+            yield from self.iter_binary(
                 binary_path, caps, stream, spec=spec, **kwargs
-            ):
-                yield method
+            )
         else:
             # We can run any w/ this spec. This becomes the same as calling
             # iter_methods. "sudo_args" in "method" will notice this as well

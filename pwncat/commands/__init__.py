@@ -47,7 +47,8 @@ import argparse
 import importlib.util
 from io import TextIOWrapper
 from enum import Enum, auto
-from typing import Dict, List, Type, Callable, Iterable
+from typing import Dict, List, Type, Callable
+from collections.abc import Iterable
 from functools import partial
 
 import rich.text
@@ -110,7 +111,7 @@ class StoreConstOnce(argparse.Action):
         setattr(namespace, self.dest, self.const)
 
 
-def StoreForAction(action: List[str]) -> Callable:
+def StoreForAction(action: list[str]) -> Callable:
     """Generates a custom argparse Action subclass which verifies that the current
     selected "action" option is one of the provided actions in this function. If
     not, an error is raised."""
@@ -131,7 +132,7 @@ def StoreForAction(action: List[str]) -> Callable:
     return StoreFor
 
 
-def StoreConstForAction(action: List[str]) -> Callable:
+def StoreConstForAction(action: list[str]) -> Callable:
     """Generates a custom argparse Action subclass which verifies that the current
     selected "action" option is one of the provided actions in this function. If
     not, an error is raised. This stores the constant `const` to the `dest` argument.
@@ -228,12 +229,12 @@ class CommandDefinition:
 
     PROG = "unimplemented"
     """ The name of your new command """
-    ARGS: Dict[str, Parameter] = {}
+    ARGS: dict[str, Parameter] = {}
     """ A dictionary of parameter definitions created with the ``Parameter`` class.
     If this is None, your command will receive the raw argument string and no processing
     will be done except removing the leading command name.
     """
-    GROUPS: Dict[str, Group] = {}
+    GROUPS: dict[str, Group] = {}
     """ A dictionary mapping group definitions to group names. The parameters to Group
     are passed directly to either add_argument_group or add_mutually_exclusive_group
     with the exception of the mutex arg, which determines the group type. """
@@ -286,8 +287,8 @@ class CommandDefinition:
     def build_parser(
         self,
         parser: argparse.ArgumentParser,
-        args: Dict[str, Parameter],
-        group_defs: Dict[str, Group],
+        args: dict[str, Parameter],
+        group_defs: dict[str, Group],
     ):
         """
         Parse the ARGS and DEFAULTS dictionaries to build an argparse ArgumentParser
@@ -429,7 +430,7 @@ class CommandParser:
         """We need to dynamically load commands from pwncat.commands"""
 
         self.manager = manager
-        self.commands: List["CommandDefinition"] = []
+        self.commands: list["CommandDefinition"] = []
 
         for loader, module_name, is_pkg in pkgutil.walk_packages(__path__):
             if module_name == "base":
@@ -446,8 +447,8 @@ class CommandParser:
         self.prompt: PromptSession = None
         self.toolbar: PromptSession = None
         self.loading_complete = False
-        self.aliases: Dict[str, CommandDefinition] = {}
-        self.shortcuts: Dict[str, CommandDefinition] = {}
+        self.aliases: dict[str, CommandDefinition] = {}
+        self.shortcuts: dict[str, CommandDefinition] = {}
         self.found_prefix: bool = False
         # Saved terminal state to support switching between raw and normal
         # mode.
@@ -803,7 +804,7 @@ class CommandLexer(RegexLexer):
     tokens = {}
 
     @classmethod
-    def build(cls, commands: List["CommandDefinition"]) -> Type["CommandLexer"]:
+    def build(cls, commands: list["CommandDefinition"]) -> type["CommandLexer"]:
         """Build the RegexLexer token list from the command definitions"""
 
         root = []
@@ -905,7 +906,7 @@ class CommandCompleter(Completer):
     command definitions and their associated argument definitions."""
 
     def __init__(
-        self, manager: "pwncat.manager.Manager", commands: List["CommandDefinition"]
+        self, manager: "pwncat.manager.Manager", commands: list["CommandDefinition"]
     ):
         """Construct a new command completer"""
 

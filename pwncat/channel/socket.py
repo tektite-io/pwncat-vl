@@ -150,7 +150,7 @@ class Socket(Channel):
         except (ssl.SSLEOFError, ssl.SSLSyscallError, ssl.SSLZeroReturnError) as exc:
             self._connected = False
             raise ChannelClosed(self) from exc
-        except socket.error as exc:
+        except OSError as exc:
             if exc.args[0] == errno.EAGAIN or exc.args[0] == errno.EWOULDBLOCK:
                 return data
 
