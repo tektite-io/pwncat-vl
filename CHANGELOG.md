@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-03-24
+
+### Fixed
+- **linux.py**: Added `0x0D` (CR) to `CONTROL_CODES` in `LinuxWriter` to prevent binary file corruption on PTY connections, especially with JSP reverse shells ([upstream #155](https://github.com/calebstewart/pwncat/issues/155))
+- **linux.py**: Drain channel startup output (e.g. "no job control") before sending commands during shell initialization, fixing hangs and timeouts on connection ([upstream #244](https://github.com/calebstewart/pwncat/issues/244), [#278](https://github.com/calebstewart/pwncat/issues/278), [#299](https://github.com/calebstewart/pwncat/issues/299))
+- **sudo/rules.py**: Handle spaces in sudoers runas spec like `(ALL : ALL)` which previously caused the regex to fail, silently dropping all escalation paths ([upstream #253](https://github.com/calebstewart/pwncat/issues/253))
+- **connect.py**: Allow `@` in SSH passwords without escaping by using greedy regex backtracking to the last `@` separator ([upstream #281](https://github.com/calebstewart/pwncat/issues/281))
+- **manager.py**: Load user config from `$XDG_CONFIG_HOME/pwncat/pwncatrc` with fallback to `$XDG_DATA_HOME` ([upstream #239](https://github.com/calebstewart/pwncat/issues/239))
+- **process.py**: Fall back to POSIX `ps` flags when GNU `ps` fails on busybox/constrained environments ([upstream #234](https://github.com/calebstewart/pwncat/issues/234))
+- **network.py**: Remove `check=True` from `ip addr` so non-zero exit codes in Docker containers don't suppress network enumeration ([upstream #264](https://github.com/calebstewart/pwncat/issues/264))
+- **authorized_key.py**: Enforce `chmod 700` and correct ownership on `.ssh` directory when installing key implants ([upstream #260](https://github.com/calebstewart/pwncat/issues/260))
+- **cve_2017_5618.py**: Fixed missing f-prefix on error message string
+- **container.py**: Replaced slow `find /` with simple `/.dockerenv` existence check for Docker detection
+- **pam.py**: Aligned `CalledProcessError` import to use `pwncat.subprocess` for consistency
+
+### Changed
+- **Dockerfile**: Migrated from Alpine to Debian slim for more reliable compilation
+- **run-tests.sh**: Fixed typo in Ubuntu container log message
+
 ## [0.6.0] - 2026-03-24
 
 ### Added
