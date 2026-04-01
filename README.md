@@ -17,6 +17,7 @@ Rather than let the project fade away, this fork was created to **fix critical i
 
 ### Key changes in this fork:
 - Python **3.9 to 3.14** compatibility (tested in CI)
+- **Busybox/Alpine PTY support** - automatically uploads a minimal static binary to spawn a real PTY on systems that lack `script`, `python`, and other standard tools (supports x86_64, aarch64, i686, armv7l)
 - Replaced deprecated dependencies (`netifaces` -> `psutil`, `zodburi` -> direct ZODB, `pkg_resources` -> `importlib.resources`)
 - Fixed critical bugs (resource leaks, broken error handling, shell injection)
 - Updated dependencies for modern environments
@@ -42,6 +43,10 @@ After receiving a connection, pwncat will configure the remote shell:
 After spawning a PTY, it sets the terminal in raw mode to mimic the behavior of an `ssh` session.
 
 It also synchronizes the remote PTY settings (rows, columns, `TERM`) with your local terminal to ensure proper behavior of interactive applications like `vim` or `nano`.
+
+#### Busybox/Alpine support
+
+Unlike the upstream project, `pwncat-vl` can spawn a full PTY on **minimal environments** like Alpine Linux containers or embedded busybox systems where `script`, `python`, and other standard PTY-spawning tools are unavailable. When all standard methods fail, pwncat automatically detects the remote architecture and uploads a tiny static binary (~30KB) that allocates a real PTY via `forkpty()`. The binary is written to `/dev/shm` (RAM) when possible, self-deletes after exec, and uses a randomized filename.
 
 ---
 
