@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-04-01
+
+### Added
+- **linux.py**: PTY support for busybox/Alpine environments via embedded static `pty_helper` binary. When no standard PTY method (script, python) is available, pwncat auto-detects the remote architecture, uploads a minimal forkpty helper (~30KB) over the existing connection, and execs it to allocate a real PTY. Supports x86_64, aarch64, i686, and armv7l.
+- **linux.py**: Busybox environment detection via `busybox --list`
+- **linux.py**: `ash` shell prompt support in `PROMPTS` dict
+- **linux.py**: `_find_writable_exec_dir()` - prefers `/dev/shm` (RAM) over `/tmp`, with exec permission check to handle `noexec` mounts
+- **linux.py**: Graceful fallback when no PTY method works at all (no more crash on minimal systems)
+- **pty_helper/**: Static musl-linked C helper and cross-compilation build script for 4 architectures
+
+### Fixed
+- **linux.py**: `os.get_terminal_size()` crash when pwncat runs without a local terminal (piped/backgrounded)
+- **linux.py**: Setup command echo leak on PTY shells where echo was active before `stty sane` - now sends `stty -echo` before the setup command
+
 ## [0.6.1] - 2026-03-24
 
 ### Fixed
