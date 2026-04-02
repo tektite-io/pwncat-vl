@@ -260,26 +260,6 @@ in the [documentation]. If you have an idea for a new privilege escalation metho
 or persistence method, please take a look at the API documentation specifically.
 Pull requests are welcome!
 
-## Known Issues
-
-Because `pwncat` is trying to abstractly interact with any shell with minimal remote system
-dependencies, there are some edge cases we have found. Where we find them, we do
-everything we can to account for them and hide them from the user. However, some have
-slipped through the cracks and been observed in the wild. When this happens, `pwncat`
-will do whatever it can to preserve your terminal, but you may be greeted with some
-peculiar output or command failures.
-
-### BSD Support
-
-While BSD is a Unix-based kernel, in practice its userland tools are noticeably
-different from their Linux counterparts. Due to this, many of the automated
-features of `pwncat` will not work or outright fail when running against a BSD
-based target. The stabilized shell should function within a BSD environment, but
-no guarantees are provided.
-
-If you'd like to contribute to making `pwncat` behave better on BSD, you are more than welcome to
-reach out or just fork the repo. As always, pull requests are welcome!
-
 [documentation]: https://pwncat.readthedocs.io/en/latest
 [pwncat-windows-c2]: https://github.com/calebstewart/pwncat-windows-c2
 [BadPotato]: https://github.com/calebstewart/pwncat-badpotato
